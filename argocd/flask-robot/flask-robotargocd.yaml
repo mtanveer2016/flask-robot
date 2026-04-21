@@ -9,7 +9,7 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    path: kubernetes
+    path: Kubernetes
     repoURL: https://github.com/mtanveer2016/flask-robot
     targetRevision: main
   syncPolicy:
