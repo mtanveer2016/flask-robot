@@ -10,7 +10,7 @@ spec:
   project: default
   source:
     path: kubernetes
-    repoURL: https://github.com/mtanveer2016/flaskrobot
+    repoURL: https://github.com/mtanveer2016/flask-robot
     targetRevision: main
   syncPolicy:
     automated:
