@@ -8,7 +8,7 @@ service:
   type: ClusterIP
 
 image:
-  repository: 82mtanveer/myrepo/flask-robot_v1
+  repository: 82mtanveer/myrepo/flask-robot
   tag: latest
   pullPolicy: IfNotPresent
 
