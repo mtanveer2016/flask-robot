@@ -8,8 +8,8 @@ service:
   type: ClusterIP
 
 image:
-  repository: 82mtanveer/myrepo/flask-robot
-  tag: latest
+  repository: 82mtanveer/myrepo
+  tag: flask-robot-latest
   pullPolicy: IfNotPresent
 
 replicaCount: 1
