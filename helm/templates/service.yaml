@@ -1,18 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    argocd.argoproj.io/tracking-id: flask-robot-staging:/Service:map[name:staging]/flask-robot
+  name: flask-robot
+  namespace: {{ .Values.namespace.name | default "staging" }}
   labels:
     app: flask-robot
-  name: flask-robot
-  namespace: map[name:staging]
 spec:
+  type: {{ .Values.service.type | default "ClusterIP" }}
   ports:
-    - name: http
-      port: 5002
-      protocol: TCP
-      targetPort: 5002
+    - port: {{ .Values.service.port | default 5002 }}
+      targetPort: {{ .Values.service.targetPort | default 5002 }}
+      protocol: {{ .Values.service.protocol | default "TCP" }}
   selector:
     app: flask-robot
-  type: ClusterIP
