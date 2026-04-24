@@ -7,16 +7,21 @@ service:
   protocol: TCP
   type: ClusterIP
 
+image:
+  repository: 82mtanveer/myrepo
+  tag: flask-robot_v1   # ← CHANGE THIS LINE
+  pullPolicy: IfNotPresent
+
 replicaCount: 1
 
 resources:
   requests:
-    cpu: 300m
-    memory: 90Mi
+    cpu: 250m
+    memory: 64Mi
   limits:
     cpu: 500m
     memory: 128Mi
 
-image:
-  tag: staging-latest
-  pullPolicy: IfNotPresent
+ports:
+  containerPort: 5002
+  protocol: TCP
