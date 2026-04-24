@@ -9,7 +9,7 @@ service:
 
 image:
   repository: 82mtanveer/myrepo
-  tag: flask-robot_v1   # ← CHANGE THIS LINE
+  tag: flask-robot-latest   # ← CHANGE THIS LINE
   pullPolicy: IfNotPresent
 
 replicaCount: 1
