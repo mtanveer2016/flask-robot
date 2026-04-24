@@ -38,15 +38,15 @@ spec:
             limits:
               memory: {{ .Values.resources.limits.memory }}
               cpu: {{ .Values.resources.limits.cpu }}
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: {{ .Values.ports.containerPort }}
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: {{ .Values.ports.containerPort }}
-            initialDelaySeconds: 5
-            periodSeconds: 5
+ #         livenessProbe:
+ #           httpGet:
+ #             path: /health
+ #             port: {{ .Values.ports.containerPort }}
+ #           initialDelaySeconds: 30
+ #           periodSeconds: 10
+ #         readinessProbe:
+ #           httpGet:
+ #             path: /ready
+ #             port: {{ .Values.ports.containerPort }}
+ #           initialDelaySeconds: 5
+ #           periodSeconds: 5
