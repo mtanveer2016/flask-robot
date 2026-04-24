@@ -7,11 +7,12 @@ service:
   protocol: TCP
   type: LoadBalancer
 
-replicaCount: 3
-
 image:
-  tag: stable
+  repository: 82mtanveer/myrepo
+  tag: flask-robot_v1   # ← Change from 'stable' to this
   pullPolicy: Always
+
+replicaCount: 1
 
 resources:
   requests:
