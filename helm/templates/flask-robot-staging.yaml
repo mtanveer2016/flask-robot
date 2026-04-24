@@ -22,9 +22,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
 
-      # ... other settings ...
-image:
-  repository: 82mtanveer/myrepo
-  tag: flask-robot_v1   # <--- CHANGE THIS to a tag that exists
-  pullPolicy: IfNotPresent
-# ... other settings ...
+  
