@@ -1,39 +1,129 @@
+<!DOCTYPE html>
 <html>
 <head>
- <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
- <!-- Make sure this line exists -->
-<!--    <script src="{{ url_for('static', filename='js/logic.js') }}"></script>   -->
- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>  
+    <title>Freenove Robot Car Control</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        button {
+            font-size: 24px;
+            padding: 20px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        .forward { background: #4CAF50; color: white; }
+        .backward { background: #f44336; color: white; }
+        .left { background: #ff9800; color: white; }
+        .right { background: #2196F3; color: white; }
+        .stop { background: #9e9e9e; color: white; font-size: 20px; }
+        .speed-control {
+            margin: 20px;
+            padding: 20px;
+            background: #16213e;
+            border-radius: 10px;
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            background: #0f3460;
+            border-radius: 10px;
+        }
+    </style>
 </head>
-
 <body>
-<h1 align="center"> Robot Control </h1>
-<table align="center">
-<tr>
-<th></th>
-<th><button id="forward">^</button></th>
-<th></th>
-</tr>
-<tr>
-<td><button id="left"><</button></td>
-<td></td>
-<td><button id="right">></button></td>
-</tr>
-<tr>
-<td></td>
-<td><button id="backward">v</button></td>
-<td></td>
-</tr>
-</table>
-<script src="/static/js/logic.js"></script>
-<h2 align="center"> Speed Control </h2>
-<form align="center">
-<p align="center"><input type="range" min="0"
-max="10" value="0"></p>
-<p align="center">Speed: <span></span></p>
-
-<p align="center"><input type="submit"
-value="submit" class="submit"></p>
-</form>
+    <div class="container">
+        <h1>🤖 Robot Car Controller</h1>
+        
+        <div>
+            <button class="forward" onclick="move('forward')">⬆️ FORWARD</button>
+        </div>
+        <div>
+            <button class="left" onclick="move('left')">⬅️ LEFT</button>
+            <button class="stop" onclick="move('stop')">⏹️ STOP</button>
+            <button class="right" onclick="move('right')">➡️ RIGHT</button>
+        </div>
+        <div>
+            <button class="backward" onclick="move('backward')">⬇️ BACKWARD</button>
+        </div>
+        
+        <div class="speed-control">
+            <h3>Speed Control</h3>
+            <input type="range" id="speed" min="0" max="2000" value="1000" step="100">
+            <p>Speed: <span id="speedValue">1000</span></p>
+        </div>
+        
+        <div>
+            <button onclick="beep()">🔊 BEEP</button>
+            <button onclick="setLED('red')">🔴 Red LED</button>
+            <button onclick="setLED('green')">🟢 Green LED</button>
+            <button onclick="setLED('blue')">🔵 Blue LED</button>
+        </div>
+        
+        <div class="status">
+            <h3>Status</h3>
+            <p id="statusText">Ready</p>
+        </div>
+    </div>
+    
+    <script>
+        function move(direction) {
+            fetch(`/${direction}`)
+                .then(() => updateStatus(`Moving ${direction}`));
+        }
+        
+        function stop() {
+            fetch('/stop')
+                .then(() => updateStatus('Stopped'));
+        }
+        
+        function beep() {
+            fetch('/beep')
+                .then(() => updateStatus('Beep!'));
+        }
+        
+        function setLED(color) {
+            fetch(`/led/${color}`)
+                .then(() => updateStatus(`LED: ${color}`));
+        }
+        
+        const speedSlider = document.getElementById('speed');
+        const speedValue = document.getElementById('speedValue');
+        
+        speedSlider.addEventListener('input', function() {
+            const speed = this.value;
+            speedValue.textContent = speed;
+            fetch(`/speed/${speed}`)
+                .then(() => updateStatus(`Speed set to ${speed}`));
+        });
+        
+        function updateStatus(message) {
+            document.getElementById('statusText').textContent = message;
+            setTimeout(() => {
+                if (document.getElementById('statusText').textContent === message) {
+                    document.getElementById('statusText').textContent = 'Ready';
+                }
+            }, 2000);
+        }
+    </script>
 </body>
 </html>
