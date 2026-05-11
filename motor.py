@@ -5,6 +5,11 @@ class Ordinary_Car:
     def __init__(self):
         self.pwm = PCA9685(0x40, debug=True)
         self.pwm.set_pwm_freq(50)
+        pass
+######    
+    def set_motor_model(self, left_front, left_back, right_front, right_back):
+        """Set motor speeds for all four wheels"""
+#####        
     def duty_range(self, duty1, duty2, duty3, duty4):
         if duty1 > 4095:
             duty1 = 4095
@@ -73,7 +78,12 @@ class Ordinary_Car:
     def close(self):
         self.set_motor_model(0,0,0,0)
         self.pwm.close()
-
+####################        
+        pass
+    def stop(self):
+        """Stop all motors"""
+        self.set_motor_model(0, 0, 0, 0)
+######
 if __name__=='__main__':
     PWM = Ordinary_Car()          
     try:
