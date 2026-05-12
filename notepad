@@ -1,0 +1,82 @@
+NCE ROUTES =================
+# Make sure this section appears ONLY ONCE in your app.py
+
+@app.route("/led-dance")
+def led_dance_page():
+    """LED Dance Party page"""
+    return render_template("led_dance.html")
+
+@app.route("/api/led/dance/start", methods=["POST"])
+def api_led_dance_start():
+    """Start LED dance with specified pattern"""
+    data = request.json
+    pattern = data.get("pattern", "rainbow")
+    bpm = data.get("bpm", 120)
+    duration = data.get("duration", None)
+    
+    # Validate pattern
+    valid_patterns = [p.value for p in DancePattern]
+    if pattern not in valid_patterns:
+        return jsonify({"success": False, "error": f"Invalid pattern. Choose from: {valid_patterns}"})
+    
+    success = led_dance_controller.start_dance(pattern, bpm, duration)
+    
+    return jsonify({
+        "success": success,
+        "pattern": pattern,
+        "bpm": bpm,
+        "duration": duration
+    })
+
+@app.route("/api/led/dance/stop", methods=["POST"])
+def api_led_dance_stop():
+    """Stop LED dance"""
+    led_dance_controller.stop_dance()
+    return jsonify({"success": True})
+
+@app.route("/api/led/dance/status", methods=["GET"])
+def api_led_dance_status():
+    """Get current LED dance status"""
+    return jsonify({
+        "is_dancing": led_dance_controller.is_dancing,
+        "current_pattern": led_dance_controller.current_pattern.value if led_dance_controller.current_pattern else None,
+        "bpm": led_dance_controller.bpm,
+        "brightness": led_dance_controller.brightness
+    })
+
+@app.route("/api/led/dance/patterns", methods=["GET"])
+def api_led_dance_patterns():
+    """Get list of available dance patterns"""
+    patterns = [{"id": p.value, "name": p.value.capitalize()} for p in DancePattern]
+    return jsonify({"patterns": patterns})
+
+@app.route("/api/led/dance/bpm/<int:bpm>", methods=["POST"])
+def api_led_dance_bpm(bpm):
+    """Set BPM for dance patterns"""
+    bpm = max(40, min(200, bpm))
+    led_dance_controller.set_bpm(bpm)
+    return jsonify({"success": True, "bpm": led_dance_controller.bpm})
+
+@app.route("/api/led/dance/brightness/<int:brightness>", methods=["POST"])
+def api_led_dance_brightness(brightness):
+    """Set brightness for LED dance"""
+    brightness = max(0, min(255, brightness))
+    led_dance_controller.set_brightness(brightness)
+    return jsonify({"success": True, "brightness": led_dance_controller.brightness})
+
+@app.route("/api/led/dance/sync-to-beats", methods=["POST"])
+def api_led_dance_sync():
+    """Synchronize LED dance to external beat detection"""
+    data = request.json
+    beat_detected = data.get("beat", False)
+    
+    if beat_detected and led_dance_controller.is_dancing:
+        # Flash white on beat
+        original_color = led_dance_controller.current_pattern
+        led.ledIndex(0xFF, 255, 255, 255)
+        threading.Timer(0.05, lambda: led_dance_controller.start_dance(
+            original_color.value if original_color else "rainbow", 
+            led_dance_controller.bpm
+        )).start()
+    
+    return jsonify({"success": True})
