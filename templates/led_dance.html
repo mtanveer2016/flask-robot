@@ -288,6 +288,21 @@
             <div style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
                 💡 Tip: For best results, combine with music playing near the robot's microphone
             </div>
+                <h2>🎤 Real Beat Detection</h2>
+    <p>Enable microphone to sync lights with music!</p>
+    
+    <button id="enableMicrophoneBtn" onclick="enableMicrophone()">🎙️ Enable Microphone</button>
+    <button id="disableMicrophoneBtn" onclick="disableMicrophone()" style="display:none;">⏹️ Disable Microphone</button>
+    
+    <div id="micStatus" style="margin-top: 10px; font-size: 0.9em;"></div>
+    
+    <!-- Beat visualizer -->
+    <canvas id="beatVisualizer" width="300" height="60" style="margin-top: 15px; width: 100%; background: #000; border-radius: 5px;"></canvas>
+    
+    <div style="margin-top: 10px;">
+        <label>🎛️ Sensitivity: </label>
+        <input type="range" id="sensitivitySlider" min="1" max="100" value="30">
+        <span id="sensitivityValue">30</span>
         </div>
     </div>
     
@@ -545,6 +560,248 @@
         
         // Start the app
         init();
+        
+            let audioContext = null;
+    let mediaStream = null;
+    let sourceNode = null;
+    let analyserNode = null;
+    let animationFrame = null;
+    let isMicrophoneActive = false;
+    let lastBeatTime = 0;
+    let beatCooldown = 250; // ms between beats
+    let sensitivity = 30;
+    
+    // Enable microphone and start beat detection
+    async function enableMicrophone() {
+        try {
+            // Request microphone access
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaStream = stream;
+            
+            // Create audio context
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            sourceNode = audioContext.createMediaStreamSource(stream);
+            analyserNode = audioContext.createAnalyser();
+            
+            // Configure analyser
+            analyserNode.fftSize = 256;
+            analyserNode.smoothingTimeConstant = 0.3;
+            
+            // Connect nodes
+            sourceNode.connect(analyserNode);
+            
+            // Start audio context (required after user interaction)
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+            
+            isMicrophoneActive = true;
+            
+            // Update UI
+            document.getElementById('enableMicrophoneBtn').style.display = 'none';
+            document.getElementById('disableMicrophoneBtn').style.display = 'inline-block';
+            document.getElementById('micStatus').innerHTML = '✅ Microphone active - detecting beats!';
+            document.getElementById('micStatus').style.color = '#4CAF50';
+            
+            // Start beat detection loop
+            startBeatDetection();
+            
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            document.getElementById('micStatus').innerHTML = '❌ Cannot access microphone. Please check permissions.';
+            document.getElementById('micStatus').style.color = '#f44336';
+        }
+    }
+    
+    // Disable microphone
+    function disableMicrophone() {
+        if (animationFrame) {
+            cancelAnimationFrame(animationFrame);
+        }
+        
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+        }
+        
+        if (audioContext) {
+            audioContext.close();
+        }
+        
+        isMicrophoneActive = false;
+        
+        // Update UI
+        document.getElementById('enableMicrophoneBtn').style.display = 'inline-block';
+        document.getElementById('disableMicrophoneBtn').style.display = 'none';
+        document.getElementById('micStatus').innerHTML = '⏹️ Microphone disabled';
+        document.getElementById('micStatus').style.color = '#ff9800';
+    }
+    
+    // Start beat detection loop
+    function startBeatDetection() {
+        const bufferLength = analyserNode.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        let energyHistory = [];
+        const historySize = 43; // About 1 second at 43 FPS (60 FPS = ~0.7 seconds)
+        
+        function detectBeat() {
+            if (!isMicroactive) return;
+            
+            // Get current frequency data
+            analyserNode.getByteFrequencyData(dataArray);
+            
+            // Calculate average energy (volume)
+            let sum = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                sum += dataArray[i];
+            }
+            let currentEnergy = sum / bufferLength;
+            
+            // Add to history
+            energyHistory.push(currentEnergy);
+            if (energyHistory.length > historySize) {
+                energyHistory.shift();
+            }
+            
+            // Calculate average energy from history
+            let avgEnergy = 0;
+            for (let i = 0; i < energyHistory.length; i++) {
+                avgEnergy += energyHistory[i];
+            }
+            avgEnergy /= energyHistory.length;
+            
+            // Calculate variance (how much energy changes)
+            let variance = 0;
+            for (let i = 0; i < energyHistory.length; i++) {
+                variance += Math.pow(energyHistory[i] - avgEnergy, 2);
+            }
+            variance /= energyHistory.length;
+            
+            // Dynamic threshold based on sensitivity
+            const threshold = avgEnergy + (variance * (sensitivity / 100));
+            
+            // Beat detection!
+            const now = Date.now();
+            if (currentEnergy > threshold && (now - lastBeatTime) > beatCooldown) {
+                // BEAT DETECTED!
+                lastBeatTime = now;
+                sendBeatToLED();
+                
+                // Visual feedback on canvas
+                drawBeatVisualizer(true);
+            } else {
+                drawBeatVisualizer(false);
+            }
+            
+            // Update energy meter
+            drawEnergyMeter(currentEnergy, threshold);
+            
+            // Continue loop
+            if (isMicrophoneActive) {
+                animationFrame = requestAnimationFrame(detectBeat);
+            }
+        }
+        
+        detectBeat();
+    }
+    
+    // Send beat to LED
+    async function sendBeatToLED() {
+        try {
+            await fetch('/api/led/dance/sync-to-beats', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({beat: true})
+            });
+        } catch (error) {
+            console.error('Error sending beat:', error);
+        }
+    }
+    
+    // Draw beat visualizer
+    function drawBeatVisualizer(isBeat) {
+        const canvas = document.getElementById('beatVisualizer');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        if (isBeat) {
+            // Flash on beat
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText('BEAT!', width/2 - 35, height/2 + 8);
+            
+            // Reset after flash
+            setTimeout(() => {
+                if (document.getElementById('beatVisualizer')) {
+                    drawBeatVisualizer(false);
+                }
+            }, 100);
+        } else {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Arial';
+            ctx.fillText('Listening for beats...', width/2 - 70, height/2 + 4);
+        }
+    }
+    
+    // Draw energy meter
+    function drawEnergyMeter(currentEnergy, threshold) {
+        const canvas = document.getElementById('beatVisualizer');
+        if (!canvas || isBeatDetected) return;
+        
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Clear bottom portion for meter
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, height - 20, width, 20);
+        
+        // Draw energy bar
+        const energyPercent = Math.min(1, currentEnergy / 255);
+        const energyWidth = energyPercent * width;
+        ctx.fillStyle = '#2196F3';
+        ctx.fillRect(0, height - 20, energyWidth, 15);
+        
+        // Draw threshold line
+        const thresholdPercent = Math.min(1, threshold / 255);
+        const thresholdX = thresholdPercent * width;
+        ctx.strokeStyle = '#FF9800';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(thresholdX, height - 20);
+        ctx.lineTo(thresholdX, height);
+        ctx.stroke();
+        
+        // Labels
+        ctx.fillStyle = '#fff';
+        ctx.font = '10px Arial';
+        ctx.fillText('Energy', 5, height - 5);
+        ctx.fillStyle = '#FF9800';
+        ctx.fillText('Threshold', thresholdX - 30, height - 5);
+    }
+    
+    // Update sensitivity
+    document.getElementById('sensitivitySlider').addEventListener('input', (e) => {
+        sensitivity = parseInt(e.target.value);
+        document.getElementById('sensitivityValue').textContent = sensitivity;
+    });
+    
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+        }
+        if (audioContext) {
+            audioContext.close();
+        }
+    });
     </script>
 </body>
 </html>
