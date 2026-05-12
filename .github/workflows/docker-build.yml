@@ -38,5 +38,5 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64
           push: true
-          tags: 82mtanveer/myrepo:flask-robot_v1
+          tags: 82mtanveer/myrepo:flask-robot_latest
                 82mtanveer/myrepo:${{ github.sha }}
