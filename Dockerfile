@@ -1,10 +1,14 @@
-#FROM python:3.14-slim
-FROM python:3.9-slim-bullseye
+
+FROM arm32v7/debian:bullseye
+# or for 64-bit Raspberry Pi:
+# FROM arm64v8/debian:bullseye
+
 COPY . /app
 WORKDIR /app
 
-# Install system dependencies for GPIO, SPI, I2C, Camera (libcamera), and OpenCV
 RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
     gcc \
     make \
     python3-dev \
@@ -16,13 +20,11 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxrender-dev \
     libgomp1 \
-    # Camera and libcamera dependencies
     libcamera-dev \
     python3-libcamera \
     python3-pyqt5 \
-    # Install picamera2 directly from the system repository
     python3-picamera2 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install -r requirements.txt
-CMD ["python", "app.py"]
+CMD ["python3", "app.py"]
