@@ -1,31 +1,27 @@
-#FROM python:3.14-slim
-FROM python:3.9-slim
-COPY . /app
+FROM python:3.9-slim-bullseye
+
+# Install all system build dependencies in ONE layer
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    python3-dev \
+    libffi-dev \
+    libgpiod2 \
+    pkg-config \
+    libcamera-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Install system dependencies for GPIO, SPI, I2C, Camera (libcamera), and OpenCV
-RUN for i in 1 2 3; do \
-      apt-get update && \
-      apt-get install -y --no-install-recommends \
-        gcc \
-        make \
-        python3-dev \
-        libffi-dev \
-        libgpiod2 \
-        libgl1-mesa-glx \
-        libglib2.0-0 \
-        libsm6 \
-        libxext6 \
-        libxrender-dev \
-        libgomp1 \
-        libcamera-dev \
-        python3-libcamera \
-        python3-pyqt5 \
-        python3-picamera2 \
-      && break \
-      || sleep 15; \
-    done && \
-    rm -rf /var/lib/apt/lists/*
-RUN pip install --no-cache-dir --upgrade pip
-RUN pip install -r requirements.txt
+# Copy and install Python dependencies
+COPY requirements.txt .
+
+# Upgrade pip and install packages
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
 CMD ["python", "app.py"]
