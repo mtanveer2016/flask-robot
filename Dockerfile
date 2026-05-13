@@ -1,5 +1,5 @@
 #FROM python:3.14-slim
-FROM python:3.9-slim-bullseye
+FROM python:3.9-slim
 COPY . /app
 WORKDIR /app
 
@@ -26,6 +26,6 @@ RUN for i in 1 2 3; do \
       || sleep 15; \
     done && \
     rm -rf /var/lib/apt/lists/*
-
+RUN pip install --no-cache-dir --upgrade pip
 RUN pip install -r requirements.txt
 CMD ["python", "app.py"]
