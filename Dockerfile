@@ -1,4 +1,5 @@
-FROM python:3.14-slim
+#FROM python:3.14-slim
+FROM python:3.9-slim-bullseye
 COPY . /app
 WORKDIR /app
 
