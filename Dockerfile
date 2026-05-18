@@ -1,6 +1,6 @@
 FROM python:3.9-slim-bullseye
 
-# Install only the essential system dependencies (no camera libraries)
+# Install system dependencies including pigpio client
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
@@ -8,7 +8,6 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     libffi-dev \
     libgpiod2 \
-     pigpio \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
