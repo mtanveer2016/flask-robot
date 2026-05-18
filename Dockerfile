@@ -1,8 +1,14 @@
-
 FROM python:3.9-slim-bullseye
 
+# Add the official Raspberry Pi repository
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gnupg curl && \
+    curl -sSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | apt-key add - && \
+    echo "deb http://archive.raspberrypi.org/debian/ bullseye main" > /etc/apt/sources.list.d/raspi.list && \
+    apt-get update
+
 # Install system dependencies including picamera2 requirements
-RUN apt-get update && apt-get install -y \
+RUN apt-get install -y \
     gcc \
     g++ \
     make \
@@ -16,7 +22,6 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy and install Python packages
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
