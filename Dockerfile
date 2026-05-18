@@ -1,6 +1,7 @@
+
 FROM python:3.9-slim-bullseye
 
-# Install all system build tools and dependencies in ONE layer
+# Install system dependencies including picamera2 requirements
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
@@ -8,6 +9,9 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     libffi-dev \
     libgpiod2 \
+    libcamera-dev \
+    python3-libcamera \
+    python3-pyqt5 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
