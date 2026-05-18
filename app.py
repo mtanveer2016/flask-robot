@@ -11,7 +11,7 @@ import math
 import json
 from collections import deque
 import heapq
-from picamera2 import Picamera2
+#from picamera2 import Picamera2
 import random
 from enum import Enum
 
