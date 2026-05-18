@@ -1,24 +1,27 @@
 FROM python:3.9-slim-bullseye
 
-# Add the official Raspberry Pi repository
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gnupg curl && \
-    curl -sSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | apt-key add - && \
-    echo "deb http://archive.raspberrypi.org/debian/ bullseye main" > /etc/apt/sources.list.d/raspi.list && \
-    apt-get update
-
-# Install system dependencies including picamera2 requirements
-RUN apt-get install -y \
+# Install system dependencies including build tools for picamera2
+RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     make \
     python3-dev \
     libffi-dev \
     libgpiod2 \
-    libcamera-dev \
-    python3-libcamera \
-    python3-pyqt5 \
+    libgnutls28-dev \
+    python3-pip \
+    wget \
     && rm -rf /var/lib/apt/lists/*
+
+# Install libcamera and python3-libcamera from official .deb packages
+RUN wget http://archive.raspberrypi.org/debian/pool/main/libc/libcamera/libcamera0.5_0.5.0+rpt20250429-1_arm64.deb && \
+    wget http://archive.raspberrypi.org/debian/pool/main/libc/libcamera/libcamera-dev_0.5.0+rpt20250429-1_arm64.deb && \
+    wget http://archive.raspberrypi.org/debian/pool/main/libc/libcamera/python3-libcamera_0.5.0+rpt20250429-1_arm64.deb && \
+    dpkg -i libcamera0.5_0.5.0+rpt20250429-1_arm64.deb && \
+    dpkg -i libcamera-dev_0.5.0+rpt20250429-1_arm64.deb && \
+    dpkg -i python3-libcamera_0.5.0+rpt20250429-1_arm64.deb && \
+    apt-get install -f -y && \
+    rm *.deb
 
 WORKDIR /app
 
