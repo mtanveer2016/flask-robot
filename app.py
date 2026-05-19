@@ -15,6 +15,17 @@ import heapq
 import random
 from enum import Enum
 
+
+# Get the host IP from environment variable
+import os
+#PI_HOST = os.environ.get('PIGPIO_ADDR', '10.120.14.234')
+#buzzer = Buzzer(pi_host=PI_HOST)
+
+# Use localhost if environment variable is not set
+PI_HOST = os.environ.get('PIGPIO_ADDR', 'localhost')
+PI_PORT = int(os.environ.get('PIGPIO_PORT', 8889))
+
+
 app = Flask(__name__)
 
 # ================= Hardware Initialization =================
