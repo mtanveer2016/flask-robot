@@ -11,5 +11,8 @@ spec:
     - port: {{ .Values.service.port | default 5002 }}
       targetPort: {{ .Values.service.targetPort | default 5002 }}
       protocol: {{ .Values.service.protocol | default "TCP" }}
+      {{- if and (eq .Values.service.type "NodePort") .Values.service.nodePort }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
   selector:
     app: flask-robot

@@ -9,7 +9,7 @@ service:
 
 image:
   repository: 82mtanveer/myrepo
-  tag: flask-robot_v1   # ← Change from 'stable' to this
+  tag: flask-robot-arm64-final
   pullPolicy: Always
 
 replicaCount: 1
@@ -21,3 +21,33 @@ resources:
   limits:
     cpu: 500m
     memory: 256Mi
+
+ports:
+  containerPort: 5002
+  protocol: TCP
+
+env:
+  PIGPIO_ADDR: "10.13.60.234"
+  PIGPIO_PORT: "8889"
+
+securityContext:
+  privileged: true
+
+volumeMounts:
+  - name: i2c-dev
+    mountPath: /dev/i2c-1
+  - name: dev-mem
+    mountPath: /dev/mem
+  - name: dev-gpiomem
+    mountPath: /dev/gpiomem
+
+volumes:
+  - name: i2c-dev
+    hostPath:
+      path: /dev/i2c-1
+  - name: dev-mem
+    hostPath:
+      path: /dev/mem
+  - name: dev-gpiomem
+    hostPath:
+      path: /dev/gpiomem
