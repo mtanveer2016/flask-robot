@@ -1,5 +1,6 @@
 
 from flask import Flask, render_template, jsonify, request, Response
+from prometheus_flask_exporter import PrometheusMetrics
 from motor import Ordinary_Car
 from buzzer import Buzzer
 from led import Led
@@ -27,6 +28,7 @@ PI_PORT = int(os.environ.get('PIGPIO_PORT', 8889))
 
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 
 # ================= Hardware Initialization =================
 PWM = Ordinary_Car()
