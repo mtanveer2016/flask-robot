@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     libgpiod2 \
      python3-smbus \
+     i2c-tools \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
