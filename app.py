@@ -33,11 +33,69 @@ PI_PORT = int(os.environ.get('PIGPIO_PORT', 8889))
 app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 
+# ================= Battery Monitoring =================
+
 # Battery metrics for Prometheus
 battery_voltage_gauge = Gauge('robot_battery_voltage', 
                                'Current battery voltage in volts')
 battery_percent_gauge = Gauge('robot_battery_percent', 
                                'Current battery percentage remaining')
+def get_battery_reading():
+    """Read actual battery voltage from ADC"""
+    try:
+        adc = ADC()
+        pcb_version = adc.pcb_version
+        voltage = adc.read_adc(2) * (3 if pcb_version == 1 else 2)
+        
+        # Calculate percentage for 2x18650 batteries
+        min_voltage = 6.0   # Empty
+        max_voltage = 8.4   # Fully charged
+        
+        if voltage >= max_voltage:
+            percentage = 100.0
+        elif voltage <= min_voltage:
+            percentage = 0.0
+        else:
+            percentage = ((voltage - min_voltage) / (max_voltage - min_voltage)) * 100
+        
+        return round(voltage, 2), round(percentage, 1)
+    except Exception as e:
+        print(f"Battery read error: {e}")
+        return 7.4, 50.0  # Default fallback values
+
+def update_battery_metrics():
+    """Background thread to update battery metrics"""
+    while True:
+        voltage, percentage = get_battery_reading()
+        battery_voltage_gauge.set(voltage)  # Use the gauge variable
+        battery_percent_gauge.set(percentage)  # Use the gauge variable
+        print(f"Battery updated: {voltage}V ({percentage}%)")
+        time.sleep(30)  # Update every 30 seconds
+        
+def update_battery():
+    """Simulate battery updates (replace with actual ADC reading)"""
+    voltage = 7.58
+    percentage = 65.8
+    battery_voltage_gauge.set(voltage)
+    battery_percent_gauge.set(percentage)
+    print(f"Battery: {voltage}V ({percentage}%)")
+    threading.Timer(30, update_battery).start()
+    
+# Start battery updates
+update_battery()
+
+@app.route('/health')
+def health():
+    return "Robot OK"
+
+@app.route('/metrics')
+def metrics_endpoint():
+    return metrics.expose_metrics()
+
+# Start the background thread
+battery_thread = threading.Thread(target=update_battery_metrics, daemon=True)
+battery_thread.start()
+
 
 # ================= Hardware Initialization =================
 PWM = Ordinary_Car()
@@ -54,47 +112,7 @@ current_mission = None
 
 
 
-# =============Initialize ADC for battery monitoring ===============
-try:
-    adc = ADC()
-    pcb_version = adc.pcb_version  # Detect PCB version automatically
-    print(f"ADC initialized - PCB Version: {pcb_version}")
-except Exception as e:
-    print(f"ADC initialization failed: {e}")
-    adc = None
 
-def get_battery_voltage():
-    """Read battery voltage from Freenove ADC"""
-    if adc is None:
-        # Fallback to simulated value if ADC not available
-        return 12.3
-    
-    try:
-        # Read ADC channel 2 (battery voltage)
-        # Formula from Freenove documentation:
-        # Multiply by 3 for PCB v1, by 2 for PCB v2 [citation:1]
-        voltage = adc.read_adc(2) * (3 if adc.pcb_version == 1 else 2)
-        return round(voltage, 2)
-    except Exception as e:
-        print(f"Failed to read battery voltage: {e}")
-        return 12.0  # Default fallback
-
-def calculate_battery_percentage(voltage):
-    """Calculate battery percentage based on typical 18650 discharge curve"""
-    # For 2 x 18650 batteries (typical voltage range: 7.4V - 8.4V)
-    # Fully charged: 8.4V (4.2V per cell)
-    # Empty: 6.0V (3.0V per cell - safe cutoff)
-    
-    min_voltage = 6.0   # Empty
-    max_voltage = 8.4   # Fully charged
-    
-    if voltage >= max_voltage:
-        return 100
-    elif voltage <= min_voltage:
-        return 0
-    
-    percentage = ((voltage - min_voltage) / (max_voltage - min_voltage)) * 100
-    return round(percentage, 1)
 
 # ================= ENHANCED BALL FOLLOWING SYSTEM =================
 
