@@ -1,6 +1,9 @@
 
 from flask import Flask, render_template, jsonify, request, Response
 from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_client import Gauge
+# Import Freenove ADC module for battery reading
+from adc import ADC
 from motor import Ordinary_Car
 from buzzer import Buzzer
 from led import Led
@@ -30,6 +33,12 @@ PI_PORT = int(os.environ.get('PIGPIO_PORT', 8889))
 app = Flask(__name__)
 metrics = PrometheusMetrics(app)
 
+# Battery metrics for Prometheus
+battery_voltage_gauge = Gauge('robot_battery_voltage', 
+                               'Current battery voltage in volts')
+battery_percent_gauge = Gauge('robot_battery_percent', 
+                               'Current battery percentage remaining')
+
 # ================= Hardware Initialization =================
 PWM = Ordinary_Car()
 buzzer = Buzzer()
@@ -41,6 +50,51 @@ is_moving = False
 current_mode = "manual"  # manual, ball_follow, waypoint_nav, patrol, obstacle_avoid
 autonomous_active = False
 current_mission = None
+
+
+
+
+# =============Initialize ADC for battery monitoring ===============
+try:
+    adc = ADC()
+    pcb_version = adc.pcb_version  # Detect PCB version automatically
+    print(f"ADC initialized - PCB Version: {pcb_version}")
+except Exception as e:
+    print(f"ADC initialization failed: {e}")
+    adc = None
+
+def get_battery_voltage():
+    """Read battery voltage from Freenove ADC"""
+    if adc is None:
+        # Fallback to simulated value if ADC not available
+        return 12.3
+    
+    try:
+        # Read ADC channel 2 (battery voltage)
+        # Formula from Freenove documentation:
+        # Multiply by 3 for PCB v1, by 2 for PCB v2 [citation:1]
+        voltage = adc.read_adc(2) * (3 if adc.pcb_version == 1 else 2)
+        return round(voltage, 2)
+    except Exception as e:
+        print(f"Failed to read battery voltage: {e}")
+        return 12.0  # Default fallback
+
+def calculate_battery_percentage(voltage):
+    """Calculate battery percentage based on typical 18650 discharge curve"""
+    # For 2 x 18650 batteries (typical voltage range: 7.4V - 8.4V)
+    # Fully charged: 8.4V (4.2V per cell)
+    # Empty: 6.0V (3.0V per cell - safe cutoff)
+    
+    min_voltage = 6.0   # Empty
+    max_voltage = 8.4   # Fully charged
+    
+    if voltage >= max_voltage:
+        return 100
+    elif voltage <= min_voltage:
+        return 0
+    
+    percentage = ((voltage - min_voltage) / (max_voltage - min_voltage)) * 100
+    return round(percentage, 1)
 
 # ================= ENHANCED BALL FOLLOWING SYSTEM =================
 
@@ -1325,6 +1379,35 @@ def get_status():
         "patrol_state": patrol_system.patrol_state,
         "obstacle": obstacle_info
     })
+#===================Battery status routs ======================    
+     # Get battery status and update Prometheus gauges
+    voltage = get_battery_voltage()
+    percentage = calculate_battery_percentage(voltage)
+    
+    battery_voltage_gauge.set(voltage)
+    battery_percent_gauge.set(percentage)
+    
+    # Optional: Add battery info to your JSON response
+    # ... rest of your code ...
+    
+    return jsonify({
+        # ... your existing return values ...
+        "battery_voltage": voltage,
+        "battery_percentage": percentage
+    })
+    
+@app.route("/api/battery")
+def get_battery():
+    """Get current battery status"""
+    voltage = get_battery_voltage()
+    percentage = calculate_battery_percentage(voltage)
+    
+    return jsonify({
+        "voltage": voltage,
+        "percentage": percentage,
+        "status": "critical" if percentage < 20 else "low" if percentage < 30 else "good"
+    })   
+    
     
 #===============LED DANCE ROUTES =================
 # Make sure this section appears ONLY ONCE in your app.py
