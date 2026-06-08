@@ -30,9 +30,9 @@ Real-time Monitoring (live video, distance graphs, battery status)
 Think of it as a self-driving car simplified for robotics education!
 
 **2. Hardware Components {#hardware}**
-What's physically on your robot:
-Component	Purpose	How It Works
-Raspberry Pi	Brain of the robot	Runs Python code, processes camera, controls motors
+What's physically on robot:	
+Raspberry Pi	Brain of the robot	
+Runs Python code, processes camera, controls motors
 Camera (Picamera2)	Vision system	Captures 640x480 video at ~30fps for ball tracking
 Ultrasonic Sensor (HC-SR04)	Distance measurement	Sends sound pulses, measures echo time to calculate distance (2-400cm)
 Motor Driver (Ordinary_Car)	Movement control	Converts speed commands to motor PWM signals
@@ -119,27 +119,27 @@ Second range: Wider range for different lighting
 The detection process:
 
 python
-# Step 1: Convert BGR to HSV
+**# Step 1: Convert BGR to HSV**
 hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-# Step 2: Create masks (binary images where orange = white, rest = black)
+**# Step 2: Create masks (binary images where orange = white, rest = black)**
 mask1 = cv2.inRange(hsv, lower_orange, upper_orange)
 mask2 = cv2.inRange(hsv, lower_orange2, upper_orange2)
 mask = cv2.bitwise_or(mask1, mask2)
 
-# Step 3: Clean up mask (remove noise)
+**# Step 3: Clean up mask (remove noise)**
 kernel = np.ones((5,5), np.uint8)
 mask = cv2.erode(mask, kernel, iterations=2)   # Remove small dots
 mask = cv2.dilate(mask, kernel, iterations=3)  # Grow remaining areas
 
-# Step 4: Find contours (shapes in the mask)
+**# Step 4: Find contours (shapes in the mask)**
 contours, _ = cv2.findContours(mask, ...)
 
-# Step 5: Find the most circle-like contour
+**# Step 5: Find the most circle-like contour**
 circularity = 4 * np.pi * area / (perimeter * perimeter)
-# Perfect circle = 1.0, we accept > 0.5
+**# Perfect circle = 1.0, we accept > 0.5**
 
-# Step 6: Get ball position and size
+**# Step 6: Get ball position and size**
 ((x, y), radius) = cv2.minEnclosingCircle(best_contour)
 Smoothing system:
 
@@ -159,21 +159,21 @@ BallFollowerPID Class (The Brain)
 PID = Proportional-Integral-Derivative controller
 
 python
-# Example: You want the ball centered at X=320
+**# Example: You want the ball centered at X=320**
 error = target_x - ball_x  # If ball at 300, error = 20
 
-# P - Proportional (immediate response)
+**# P - Proportional (immediate response)**
 p_output = kp * error  # 0.8 * 20 = 16
 
-# I - Integral (corrects accumulated error)
+**# I - Integral (corrects accumulated error)**
 integral += error * dt  # Adds up error over time
 i_output = ki * integral  # Fixes steady-state error
-
-# D - Derivative (anticipates future error)
+******
+# D - Derivative (anticipates future error)**
 derivative = (error - prev_error) / dt  # How fast error is changing
 d_output = kd * derivative  # Dampens oscillations
 
-# Total output
+**# Total output**
 output = p_output + i_output + d_output
 Why PID is perfect for ball following:
 
@@ -186,7 +186,7 @@ D: Smooths movement, prevents overshooting
 Speed control based on ball size:
 
 python
-# Ball appears larger when closer
+**# Ball appears larger when closer**
 if ball_radius < 60:  # Too far
     speed = 800  # Go faster
 elif ball_radius > 60:  # Too close
@@ -279,15 +279,15 @@ class Waypoint:
 Navigation math:
 
 python
-# Calculate angle to waypoint
+**# Calculate angle to waypoint**
 dx = target_x - current_x
 dy = target_y - current_y
 target_angle = math.degrees(math.atan2(dy, dx))
 
-# Calculate error between current direction and target
+**# Calculate error between current direction and target**
 angle_error = target_angle - current_angle
 
-# Convert to motor speeds
+**# Convert to motor speeds**
 turn = angle_error * 4.5  # Proportional turn
 left_speed = base_speed - turn
 right_speed = base_speed + turn
@@ -402,16 +402,16 @@ Common Issues and Solutions:
 Ball not detected:
 
 python
-# Adjust color ranges in app.py
+**# Adjust color ranges in app.py**
 self.lower_orange = np.array([5, 100, 100])   # Try lower hue (0-10)
 self.upper_orange = np.array([15, 255, 255])  # Try higher hue (20-30)
 Ultrasonic giving wrong readings:
 
 python
-# Add more smoothing
+**# Add more smoothing**
 self.readings = deque(maxlen=20)  # Increase from 10 to 20
 
-# Or check wiring (voltage divider needed!)
+**# Or check wiring (voltage divider needed!)**
 LED dance not syncing to beats:
 
 The beat sync requires microphone access
@@ -423,13 +423,13 @@ Works best with music playing near computer mic
 Robot not responding:
 
 python
-# Check if camera is working
+**# Check if camera is working**
 print(f"Camera available: {camera_available}")
 
-# Check mode
+**# Check mode**
 print(f"Current mode: {current_mode}")
 
-# Test motors directly
+**# Test motors directly**
 PWM.set_motor_model(500, 500, 500, 500)  # Should move forward
 Performance Optimization Tips:
 Reduce camera resolution for faster processing:
@@ -439,11 +439,11 @@ config = picam2.create_video_configuration(main={"size": (320, 240)})  # Half si
 Adjust PID values for different surfaces:
 
 python
-# For slippery floors (less grip)
+**# For slippery floors (less grip)**
 self.kp = 0.6   # Lower = less aggressive turning
 self.kd = 0.15  # Higher = more damping
 
-# For carpet (more grip)
+**# For carpet (more grip)**
 self.kp = 1.0   # Higher = more aggressive
 self.kd = 0.05  # Lower = less damping
 Change ultrasonic update rate:
