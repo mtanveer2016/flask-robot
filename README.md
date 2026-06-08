@@ -168,8 +168,8 @@ p_output = kp * error  # 0.8 * 20 = 16
 **# I - Integral (corrects accumulated error)**
 integral += error * dt  # Adds up error over time
 i_output = ki * integral  # Fixes steady-state error
-******
-# D - Derivative (anticipates future error)**
+
+**# D - Derivative (anticipates future error)**
 derivative = (error - prev_error) / dt  # How fast error is changing
 d_output = kd * derivative  # Dampens oscillations
 
