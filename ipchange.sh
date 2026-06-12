@@ -1,5 +1,5 @@
 #!/bin/bash
-OLD_IP="10.149.123.234"
+OLD_IP="10.202.105.234"
 NEW_IP="10.149.123.234"
 echo "Updating IP from $OLD_IP to $NEW_IP"
 # Update kubeconfig
