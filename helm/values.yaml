@@ -40,7 +40,7 @@ ingress:
           pathType: ImplementationSpecific
 
 env:
-  PIGPIO_ADDR: "10.148.131.234"
+  PIGPIO_ADDR: "10.138.214.234"
   PIGPIO_PORT: "8889"
 
 securityContext:
