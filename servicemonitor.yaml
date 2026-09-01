@@ -12,7 +12,7 @@ spec:
       release: prometheus  # Match service labels
   namespaceSelector:
     matchNames:
-      - default
+      - staging
   endpoints:
     - port: http
       interval: 30s
