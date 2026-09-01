@@ -27,7 +27,7 @@ ports:
   protocol: TCP
 
 env:
-  PIGPIO_ADDR: "10.188.119.234"
+  PIGPIO_ADDR: "10.103.216.235"
   PIGPIO_PORT: "8889"
 
 securityContext:
